@@ -1,5 +1,8 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
 #include <math.h>
+#include <string.h>
 
 // (c) by W.Zola set/23
 //
@@ -11,8 +14,8 @@
 // gcc -O3 max-heap.c -o max-heap -lm
 
 #define SHOW_DECREASE_MAX_STEPS 1
-
 #define MAX_HEAP_SIZE (1024 * 1024)
+#define RAND_RANGE 10  // Só pra teste, no trabalho vai ter que deletar essa pra fazer com o RAND_MAX
 
 typedef struct
 {
@@ -31,7 +34,7 @@ void drawHeapTree(par_t heap[], int size, int nLevels) // FIX ME!
     {
         // print all elements in this level
         for (int i = offset; i < size && i < (offset + nElements); i++)
-            printf("[%1f, %d]", heap[i].chave, heap[i].valor);
+            printf("[chave: %.0f, índice: %d]", heap[i].chave, heap[i].valor);
         printf("\n");
 
         offset += nElements;
@@ -40,9 +43,9 @@ void drawHeapTree(par_t heap[], int size, int nLevels) // FIX ME!
     }
 }
 
-void swap(int *a, int *b) //__attribute__((always_inline));
+void swap(par_t *a, par_t *b) //__attribute__((always_inline));
 {
-    int temp = *a;
+    par_t temp = *a;
     *a = *b;
     *b = temp;
 }
@@ -108,8 +111,8 @@ int isMaxHeap(par_t heap[], int tam)
             continue;
         else
         {
-            printf("\nbroke at [%d]=%d\n", i, heap[i].chave);
-            printf("father at [%d]=%d\n", parent(i), heap[parent(i)].chave);
+            printf("\nbroke at [%d]=%f\n", i, heap[i].chave);
+            printf("father at [%d]=%f\n", parent(i), heap[parent(i)].chave);
             return 0;
         }
     return 1;
@@ -134,79 +137,68 @@ void decreaseMax(par_t heap[], int tam, float chave, int valor)
     }
 }
 
-//////////////
-int main()
+void geraNaleatorios(float v[], int n)
 {
-    int heapSize;
-    int v[] = {40, 10, 30, 70, 50, 20, 4, 5, 44, 40, 55, 50}; // GERADO ALEATÓRIO
-    int n = sizeof(v) / sizeof(v[0]);                         // ENTRADA
-    int k = 4;                                                // ENTRADA
+    for(int i = 0; i < n; i++)
+    {
+        // Gera dois aleatorios entre 0 e RAND_MAX
+	    int a = rand() % RAND_RANGE;  
+	    int b = rand() % RAND_RANGE;  
+	
+        // Junta esses dois e forma um numero para o vetor v
+	    float elem = a * 100.0 + b;
+
+        // inserir o valor v na posição p
+	    v[i] = elem;
+    }
+}
+
+int main(int argc, char* argv[])
+{
+    int n = atoi(argv[1]);  // Linha de comando, quantidade de nums do vetor v
+    int nThreads = atoi(argv[3]);  // Linha de comando
+    int heapSize = 0;  // Heap vazia
+    float v[n]; // = {40, 10, 30, 70, 50, 20, 4, 5, 44, 40, 55, 50}; // GERADO ALEATÓRIO                         // ENTRADA
+    int k = atoi(argv[2]);                                                // ENTRADA
     par_t heap[k];                                            // heap S
 
-    // Heap vazia
-    heapSize = 0;
-    printf("Heap vazia!\n");
+    // Randomiza a SEED
+    srand(time(NULL));
 
-    printf("inserindo: ");
-    for (int i = 0; i < k; i++)
-        printf("%d ", v[i]);
+    // Cria o vetor v
+    geraNaleatorios(v, n);
+
+    // Printa o vetor v
+    for (int i = 0; i < n; i++)
+        printf("%0.f ", v[i]);
     printf("\n");
 
-    // Insere todos os valores de v até k na heap S
-    for (int i = 0; i < k; i++)
-    {
-        printf("insere %d\n", v[i]);
-        insert(heap, &heapSize, v[i], i);
-        printf("------Max-Heap Tree------ ");
-        if (isMaxHeap(heap, heapSize))
-            printf("é heap!\n");
-        else
-            printf("não é heap!\n");
+    // // PARTE 1 - Insere todos os valores de v até k na heap S
+    // for (int i = 0; i < k; i++)
+    // {
+    //     printf("insere %d\n", v[i]);
+    //     insert(heap, &heapSize, v[i], i);
+    //     printf("------Max-Heap Tree------ ");
+    //     if (isMaxHeap(heap, heapSize))
+    //         printf("é heap!\n");
+    //     else
+    //         printf("não é heap!\n");
 
-        #ifndef SHOW_DECREASE_MAX_STEPS
-                drawHeapTree(heap, heapSize, 4);
-        #endif
-    }
-
-    #ifdef SHOW_DECREASE_MAX_STEPS
-        drawHeapTree(heap, heapSize, 4);
-    #endif
-
-    for (int i = k + 1; i < n; i++)
-    {
-        decreaseMax(heap, heapSize, v[i], i);
-    }
-
-    #ifdef SHOW_DECREASE_MAX_STEPS
-        drawHeapTree(heap, heapSize, 4);
-    #endif
-
-    // printf("=========================\n");
-    // printf("=====decreaseMAX tests===\n");
-    // int data2[] = {4, 10, 30, 70, 55, 20, 4, 5, 25};
-    // n = sizeof(data2) / sizeof(data2[0]);
-
-    // printf("will decreaseMAX to the following values: " );
-    // for( int i=0; i<n; i++ ) {
-    //   printf("%d ", data2[i]);
+    //     #ifndef SHOW_DECREASE_MAX_STEPS
+    //             drawHeapTree(heap, heapSize, 4);
+    //     #endif
     // }
-    // printf( "\n" );
 
-    // for( int i=0; i<n; i++ ) {
-    //   printf("decreaseMAX to %d\n", data2[i]);
-    //   int new_value = data2[i];
-    //   decreaseMax( heap, heapSize, new_value );
+    // #ifdef SHOW_DECREASE_MAX_STEPS
+    //     drawHeapTree(heap, heapSize, 4);
+    // #endif
 
-    //   printf("------Max-Heap Tree (after decrease)------ ");
-    //   if( isMaxHeap( heap, heapSize ) )
-    //      printf( "is a max heap!\n" );
-    //   else
-    //      printf( "is NOT a max heap!\n" );
+    // // PARTE 2 - Agora checa o resto do vetor para ver se tem menores
+    // for (int i = k; i < n; i++)
+    //     decreaseMax(heap, heapSize, v[i], i);
 
-    //   //#ifndef SHOW_DECREASE_MAX_STEPS
-    //    drawHeapTree( heap, heapSize, 4 );
-    //   //#endif
-
-    //}
+    // #ifdef SHOW_DECREASE_MAX_STEPS
+    //     drawHeapTree(heap, heapSize, 4);
+    // #endif
     return 0;
 }
