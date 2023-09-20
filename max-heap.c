@@ -3,6 +3,7 @@
 #include <time.h>
 #include <math.h>
 #include <string.h>
+#include <pthread.h>
 
 // (c) by W.Zola set/23
 //
@@ -22,6 +23,14 @@ typedef struct
     float chave;
     int valor;
 } par_t;
+
+typedef struct params 
+{
+    float *input;
+    int nTotalElements;
+    int k;
+    par_t *output; // A field to store the output array
+} params_t;
 
 void drawHeapTree(par_t heap[], int size, int nLevels) // FIX ME!
 {
@@ -153,10 +162,16 @@ void geraNaleatorios(float v[], int n)
     }
 }
 
-par_t* acharKMenores(float input[], int nTotalElements, int k)
+//par_t* acharKMenores(float input[], int nTotalElements, int k, int nThreads)
+void *acharKMenores(void *arg) 
 {
-    int heapSize = 0;
+    params_t *threadParams = (params_t *)arg;
+    float *input = threadParams->input;
+    int nTotalElements = threadParams->nTotalElements;
+    int k = threadParams->k;
     par_t* output = malloc(k * sizeof(par_t));
+    int heapSize = 0;
+
     // PARTE 1 - Insere todos os valores de input até k na heap S
     for (int i = 0; i < k; i++)
     {
@@ -182,7 +197,7 @@ par_t* acharKMenores(float input[], int nTotalElements, int k)
     //     drawHeapTree(output, heapSize, k);
     // #endif
 
-    return output;
+    threadParams->output = output;
 }
 
 int main(int argc, char* argv[])
@@ -192,6 +207,13 @@ int main(int argc, char* argv[])
     par_t* heap;
     clock_t startTime, endTime;
     double elapsedTime;
+    pthread_t threads[nThreads];
+    pthread_mutex_t mutex;
+    params_t threadParams;
+    int num;
+    
+    // Inicializa Pthreads
+    //pthread_mutex_init(&mutex, NULL);
 
     // Randomiza a SEED
     srand(time(NULL));
@@ -201,22 +223,50 @@ int main(int argc, char* argv[])
 
     // Pega o tempo inicial de exec do algoritmo
     startTime = clock(); 
+    
+    // Cria as threads
+    for (int i = 0; i < nThreads; i++)
+    {
+        threadParams.input = v;
+        threadParams.nTotalElements = n;
+        threadParams.k = k;
+        threadParams.output = NULL;
 
-    // Algoritmo principal
-    heap = acharKMenores(v, n, k);
+        num = i + 1;
+
+        // Testa se criou as threads
+        if (pthread_create(&threads[i], NULL, acharKMenores, &threadParams) != 0)
+        {
+            perror("Erro ao criar threads");
+            exit(EXIT_FAILURE);
+        } 
+    }   
+
+    // Aguarda as threads terminarem a execução
+    for (int i = 0; i < nThreads; i++)
+    {
+        // Testa se chegaram ao fim
+        if (pthread_join(threads[i], NULL) != 0)
+        {
+            perror("Erro ao aguardas as threads\n");
+            exit(EXIT_FAILURE);
+        }
+    }
 
     // Pega o tempo final de exec do algoritmo
     endTime = clock();
 
     // Print pra testar
     #ifdef SHOW_DECREASE_MAX_STEPS
-        drawHeapTree(heap, k, k);
+        //drawHeapTree(heap, k, k);
     #endif
 
     // Printando o tempo que levou
     elapsedTime = ((double)(endTime - startTime)) / CLOCKS_PER_SEC * 1000.0;
-    printf("\nO algoritmo demorou: %.3f milissegundos para executar.\n", elapsedTime);
+    printf("\nO algoritmo demorou: \n%.3f milissegundos para executar.\nE a vazão foi de %.3f MOPS\n", elapsedTime, (n/elapsedTime)/1000);
 
-    free(heap);
+    //for (int i = 0; i < nThreads; i++)
+        free(threadParams.output);
+
     return 0;
 }
