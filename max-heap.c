@@ -153,14 +153,43 @@ void geraNaleatorios(float v[], int n)
     }
 }
 
+par_t* acharKMenores(float input[], int nTotalElements, int k)
+{
+    int heapSize = 0;
+    par_t* output = malloc(k * sizeof(par_t));
+    // PARTE 1 - Insere todos os valores de input até k na heap S
+    for (int i = 0; i < k; i++)
+    {
+        insert(output, &heapSize, input[i], i);
+
+        // PRINT PRA TESTAR
+        // #ifndef SHOW_DECREASE_MAX_STEPS
+        //         drawHeapTree(heap, heapSize, 4);
+        // #endif
+    }
+
+    // // PRINT pra testar
+    // #ifdef SHOW_DECREASE_MAX_STEPS
+    //     drawHeapTree(output, heapSize, k);
+    // #endif
+
+    // PARTE 2 - Agora checa o resto do vetor para ver se tem menores
+    for (int i = k; i < nTotalElements; i++)
+        decreaseMax(output, heapSize, input[i], i);
+
+    // // PRINT pra testar
+    // #ifdef SHOW_DECREASE_MAX_STEPS
+    //     drawHeapTree(output, heapSize, k);
+    // #endif
+
+    return output;
+}
+
 int main(int argc, char* argv[])
 {
-    int n = atoi(argv[1]);  // Linha de comando, quantidade de nums do vetor v
-    int nThreads = atoi(argv[3]);  // Linha de comando
-    int heapSize = 0;  // Heap vazia
-    float v[n]; // = {40, 10, 30, 70, 50, 20, 4, 5, 44, 40, 55, 50}; // GERADO ALEATÓRIO                         // ENTRADA
-    int k = atoi(argv[2]);                                                // ENTRADA
-    par_t heap[k];                                            // heap S
+    int n = atoi(argv[1]), k = atoi(argv[2]), nThreads = atoi(argv[3]); // Linha de comando  
+    float v[n];                        
+    par_t* heap;
 
     // Randomiza a SEED
     srand(time(NULL));
@@ -168,37 +197,13 @@ int main(int argc, char* argv[])
     // Cria o vetor v
     geraNaleatorios(v, n);
 
-    // Printa o vetor v
-    for (int i = 0; i < n; i++)
-        printf("%0.f ", v[i]);
-    printf("\n");
+    heap = acharKMenores(v, n, k);
 
-    // // PARTE 1 - Insere todos os valores de v até k na heap S
-    // for (int i = 0; i < k; i++)
-    // {
-    //     printf("insere %d\n", v[i]);
-    //     insert(heap, &heapSize, v[i], i);
-    //     printf("------Max-Heap Tree------ ");
-    //     if (isMaxHeap(heap, heapSize))
-    //         printf("é heap!\n");
-    //     else
-    //         printf("não é heap!\n");
+    // Print pra testar
+    #ifdef SHOW_DECREASE_MAX_STEPS
+        drawHeapTree(heap, k, k);
+    #endif
 
-    //     #ifndef SHOW_DECREASE_MAX_STEPS
-    //             drawHeapTree(heap, heapSize, 4);
-    //     #endif
-    // }
-
-    // #ifdef SHOW_DECREASE_MAX_STEPS
-    //     drawHeapTree(heap, heapSize, 4);
-    // #endif
-
-    // // PARTE 2 - Agora checa o resto do vetor para ver se tem menores
-    // for (int i = k; i < n; i++)
-    //     decreaseMax(heap, heapSize, v[i], i);
-
-    // #ifdef SHOW_DECREASE_MAX_STEPS
-    //     drawHeapTree(heap, heapSize, 4);
-    // #endif
+    free(heap);
     return 0;
 }
