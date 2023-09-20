@@ -190,6 +190,8 @@ int main(int argc, char* argv[])
     int n = atoi(argv[1]), k = atoi(argv[2]), nThreads = atoi(argv[3]); // Linha de comando  
     float v[n];                        
     par_t* heap;
+    clock_t startTime, endTime;
+    double elapsedTime;
 
     // Randomiza a SEED
     srand(time(NULL));
@@ -197,12 +199,23 @@ int main(int argc, char* argv[])
     // Cria o vetor v
     geraNaleatorios(v, n);
 
+    // Pega o tempo inicial de exec do algoritmo
+    startTime = clock(); 
+
+    // Algoritmo principal
     heap = acharKMenores(v, n, k);
+
+    // Pega o tempo final de exec do algoritmo
+    endTime = clock();
 
     // Print pra testar
     #ifdef SHOW_DECREASE_MAX_STEPS
         drawHeapTree(heap, k, k);
     #endif
+
+    // Printando o tempo que levou
+    elapsedTime = ((double)(endTime - startTime)) / CLOCKS_PER_SEC * 1000.0;
+    printf("\nO algoritmo demorou: %.3f milissegundos para executar.\n", elapsedTime);
 
     free(heap);
     return 0;
