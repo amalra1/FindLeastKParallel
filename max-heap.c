@@ -168,7 +168,6 @@ void *acharKMenores(void *arg)
 
 int main(int argc, char* argv[])
 {                        
-    par_t* heap;
     clock_t startTime, endTime;
     double elapsedTime;
     int num;
@@ -244,7 +243,7 @@ int main(int argc, char* argv[])
         }
     }
 
-    // Printa vetor de aleatórios
+    // Printa K menores
     printf("\nK menores:\n");
     for (int i = 0; i < k; i++)
         printf("%0.f ", output[i].chave);
