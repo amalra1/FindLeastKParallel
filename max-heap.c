@@ -5,15 +5,8 @@
 #include <string.h>
 #include <pthread.h>
 
-// (c) by W.Zola set/23
-//
-// EXAMPLE Sequential MAX-Heap,
-//                    decreaseMax operation
-//                    and others
-
-// para compilar:
-// gcc -O3 max-heap.c -o max-heap -lm
-
+#define THREAD_MIN 1
+#define THREAD_MAX 8
 #define SHOW_DECREASE_MAX_STEPS 1
 #define MAX_HEAP_SIZE (1024 * 1024)
 #define RAND_RANGE 10  // Só pra teste, no trabalho vai ter que deletar essa pra fazer com o RAND_MAX
@@ -24,19 +17,14 @@ typedef struct
     int valor;
 } par_t;
 
-typedef struct params 
-{
-    float *input;
-    int nTotalElements;
-    int k;
-    par_t *output; // A field to store the output array
-} params_t;
+int n, k, nThreads;
+float *input;
+par_t *output;
 
 void drawHeapTree(par_t heap[], int size, int nLevels) // FIX ME!
 {
     int offset = 0;
     int space = (int)pow(2, nLevels - 1);
-    // int space = 0;
 
     int nElements = 1;
     for (int level = 0; level < nLevels; level++)
@@ -52,7 +40,7 @@ void drawHeapTree(par_t heap[], int size, int nLevels) // FIX ME!
     }
 }
 
-void swap(par_t *a, par_t *b) //__attribute__((always_inline));
+void swap(par_t *a, par_t *b)
 {
     par_t temp = *a;
     *a = *b;
@@ -109,7 +97,9 @@ void insert(par_t heap[], int *tam, float chave, int valor)
 
     heap[last].chave = chave;
     heap[last].valor = valor;
-    printf("\n%1f\n", heap[last].chave);
+
+    printf("Inserido --> %1f\n", heap[last].chave);
+
     heapifyUp(heap, tam, last);
 }
 
@@ -139,7 +129,7 @@ void decreaseMax(par_t heap[], int tam, float chave, int valor)
 
         #if SHOW_DECREASE_MAX_STEPS
             // drawHeapTree( heap, tam, 4 );
-            printf("    ~~~~~~~~~~~~~~~~~~~~~~~~~\n");
+            printf("    ~~~~~~~~~~~~~~~~~~~~~~~~~DECREASE MAX!\n");
         #endif
 
         maxHeapify(heap, tam, 0);
@@ -162,64 +152,70 @@ void geraNaleatorios(float v[], int n)
     }
 }
 
-//par_t* acharKMenores(float input[], int nTotalElements, int k, int nThreads)
 void *acharKMenores(void *arg) 
 {
-    params_t *threadParams = (params_t *)arg;
-    float *input = threadParams->input;
-    int nTotalElements = threadParams->nTotalElements;
-    int k = threadParams->k;
-    par_t* output = malloc(k * sizeof(par_t));
     int heapSize = 0;
+    int threadNum = (int)arg;
 
     // PARTE 1 - Insere todos os valores de input até k na heap S
     for (int i = 0; i < k; i++)
-    {
         insert(output, &heapSize, input[i], i);
 
-        // PRINT PRA TESTAR
-        // #ifndef SHOW_DECREASE_MAX_STEPS
-        //         drawHeapTree(heap, heapSize, 4);
-        // #endif
-    }
-
-    // // PRINT pra testar
-    // #ifdef SHOW_DECREASE_MAX_STEPS
-    //     drawHeapTree(output, heapSize, k);
-    // #endif
-
     // PARTE 2 - Agora checa o resto do vetor para ver se tem menores
-    for (int i = k; i < nTotalElements; i++)
+    for (int i = k; i < n; i++)
         decreaseMax(output, heapSize, input[i], i);
-
-    // // PRINT pra testar
-    // #ifdef SHOW_DECREASE_MAX_STEPS
-    //     drawHeapTree(output, heapSize, k);
-    // #endif
-
-    threadParams->output = output;
 }
 
 int main(int argc, char* argv[])
-{
-    int n = atoi(argv[1]), k = atoi(argv[2]), nThreads = atoi(argv[3]); // Linha de comando  
-    float v[n];                        
+{                        
     par_t* heap;
     clock_t startTime, endTime;
     double elapsedTime;
-    pthread_t threads[nThreads];
-    pthread_mutex_t mutex;
-    params_t threadParams;
     int num;
-    
-    // Inicializa Pthreads
-    //pthread_mutex_init(&mutex, NULL);
+
+    // Tratando a entrada
+    if (argc != 4) 
+    {
+        printf("Forma de execução: %s <Quantidade de números aleatórios> <Quantidade de K menores> <Quantidade de threads>\n" , argv[0]); 
+        exit(EXIT_FAILURE);
+    } 
+    else 
+    {
+        nThreads = atoi(argv[3]);
+
+        if (nThreads < THREAD_MIN || nThreads > THREAD_MAX) 
+        {
+            printf("Forma de execução: %s <Quantidade de números aleatórios> <Quantidade de K menores> <Quantidade de threads>\n" , argv[0]); 
+            printf("<Quantidade de threads> tem que ser entre %d e %d\n", THREAD_MIN, THREAD_MAX);
+            exit(EXIT_FAILURE);
+        }  
+
+        n = atoi(argv[1]);
+        k = atoi(argv[2]);
+        
+        if (k < 0 || k > n) 
+        {
+            printf("Forma de execução: %s <Quantidade de números aleatórios> <Quantidade de K menores> <Quantidade de threads>\n" , argv[0]); 
+            printf("<Quantidade de K menores> tem que ser entre 1 e <Quantidade de números aleatórios>\n");
+            exit(EXIT_FAILURE);
+        }       
+    }
+
+    input = malloc(n * sizeof(par_t));
+    output = malloc(k * sizeof(par_t));
+    pthread_t threads[nThreads];
 
     // Randomiza a SEED
     srand(time(NULL));
 
     // Cria o vetor v
-    geraNaleatorios(v, n);
+    geraNaleatorios(input, n);
+
+    // Printa vetor de aleatórios
+    printf("Vetor de aleatórios:\n");
+    for (int i = 0; i < n; i++)
+        printf("%0.f ", input[i]);
+    printf("\n");
 
     // Pega o tempo inicial de exec do algoritmo
     startTime = clock(); 
@@ -227,15 +223,10 @@ int main(int argc, char* argv[])
     // Cria as threads
     for (int i = 0; i < nThreads; i++)
     {
-        threadParams.input = v;
-        threadParams.nTotalElements = n;
-        threadParams.k = k;
-        threadParams.output = NULL;
-
         num = i + 1;
 
         // Testa se criou as threads
-        if (pthread_create(&threads[i], NULL, acharKMenores, &threadParams) != 0)
+        if (pthread_create(&threads[i], NULL, acharKMenores, (void*)num) != 0)
         {
             perror("Erro ao criar threads");
             exit(EXIT_FAILURE);
@@ -253,20 +244,21 @@ int main(int argc, char* argv[])
         }
     }
 
+    // Printa vetor de aleatórios
+    printf("\nK menores:\n");
+    for (int i = 0; i < k; i++)
+        printf("%0.f ", output[i].chave);
+    printf("\n");
+
     // Pega o tempo final de exec do algoritmo
     endTime = clock();
-
-    // Print pra testar
-    #ifdef SHOW_DECREASE_MAX_STEPS
-        //drawHeapTree(heap, k, k);
-    #endif
 
     // Printando o tempo que levou
     elapsedTime = ((double)(endTime - startTime)) / CLOCKS_PER_SEC * 1000.0;
     printf("\nO algoritmo demorou: \n%.3f milissegundos para executar.\nE a vazão foi de %.3f MOPS\n", elapsedTime, (n/elapsedTime)/1000);
 
-    //for (int i = 0; i < nThreads; i++)
-        free(threadParams.output);
+    free(output);
+    free(input);
 
     return 0;
 }
