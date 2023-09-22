@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <math.h>
+#include <unistd.h>
 #include <string.h>
 #include <pthread.h>
 
@@ -20,6 +21,7 @@ typedef struct
 int n, k, nThreads;
 float *input;
 par_t *output;
+par_t **heaps;
 
 void drawHeapTree(par_t heap[], int size, int nLevels) // FIX ME!
 {
@@ -156,14 +158,40 @@ void *acharKMenores(void *arg)
 {
     int heapSize = 0;
     int threadNum = (int)arg;
+    int indexPrimElem = threadNum * (n/nThreads);  // Cada thread vai ter n/nthreads elementos
+    int indexUltElem;                              // A multiplicação é pra ver em qual dos blocos ela está
+
+    // Checa se é a última thread
+    if (threadNum == nThreads - 1)
+        indexUltElem = n - 1;
+    else
+    {
+        if (((threadNum + 1) * (n/nThreads)) < n)
+            indexUltElem = (threadNum + 1) * (n/nThreads) - 1;
+        else
+            indexUltElem = n - 1;
+    }
 
     // PARTE 1 - Insere todos os valores de input até k na heap S
-    for (int i = 0; i < k; i++)
-        insert(output, &heapSize, input[i], i);
+    for (int i = indexPrimElem; i < k; i++)
+        insert(heaps[threadNum], &heapSize, input[i], i);
 
     // PARTE 2 - Agora checa o resto do vetor para ver se tem menores
-    for (int i = k; i < n; i++)
-        decreaseMax(output, heapSize, input[i], i);
+    for (int i = k; i < indexUltElem; i++)
+        decreaseMax(heaps[threadNum], heapSize, input[i], i);
+
+    // IA SOLUCIONAR TODOS OS PROBLEMAS ////////////////////////////////////////////////////////////////
+    // AQUI MAS FICOU TARDE FUI DORMIR /////////////////////////////////////////////////////////////////
+    // for (int i = indexPrimElem; i < indexUltElem; i++)
+    // {
+            // if (heapSizes[i] < k)
+                // PARTE 1
+            // else
+                // PARTE 2
+    // }
+
+    printf("Thread %d tem a heap:\n", threadNum);
+    drawHeapTree(heaps[threadNum], heapSize, k);
 }
 
 int main(int argc, char* argv[])
@@ -200,15 +228,21 @@ int main(int argc, char* argv[])
         }       
     }
 
-    input = malloc(n * sizeof(par_t));
-    output = malloc(k * sizeof(par_t));
+    // Aloca espaços
     pthread_t threads[nThreads];
+    input = malloc(n * sizeof(par_t));
+    heaps = malloc(nThreads * sizeof(par_t *));
+    output = malloc(k * sizeof(par_t));
 
     // Randomiza a SEED
     srand(time(NULL));
 
     // Cria o vetor v
     geraNaleatorios(input, n);
+
+    // Aloca espaço para cada heap
+    for (int i = 0; i < nThreads; i++)
+        heaps[i] = malloc(k * sizeof(par_t));
 
     // Printa vetor de aleatórios
     printf("Vetor de aleatórios:\n");
@@ -220,16 +254,17 @@ int main(int argc, char* argv[])
     startTime = clock(); 
     
     // Cria as threads
+    num = 0;
     for (int i = 0; i < nThreads; i++)
     {
-        num = i + 1;
-
         // Testa se criou as threads
         if (pthread_create(&threads[i], NULL, acharKMenores, (void*)num) != 0)
         {
             perror("Erro ao criar threads");
             exit(EXIT_FAILURE);
-        } 
+        }
+
+        num++; 
     }   
 
     // Aguarda as threads terminarem a execução
@@ -244,10 +279,10 @@ int main(int argc, char* argv[])
     }
 
     // Printa K menores
-    printf("\nK menores:\n");
-    for (int i = 0; i < k; i++)
-        printf("%0.f ", output[i].chave);
-    printf("\n");
+    // printf("\nK menores:\n");
+    // for (int i = 0; i < k; i++)
+    //     printf("%0.f ", output[i].chave);
+    // printf("\n");
 
     // Pega o tempo final de exec do algoritmo
     endTime = clock();
@@ -256,8 +291,12 @@ int main(int argc, char* argv[])
     elapsedTime = ((double)(endTime - startTime)) / CLOCKS_PER_SEC * 1000.0;
     printf("\nO algoritmo demorou: \n%.3f milissegundos para executar.\nE a vazão foi de %.3f MOPS\n", elapsedTime, (n/elapsedTime)/1000);
 
-    free(output);
+    for (int i = 0; i < nThreads; i++)
+        free(heaps[i]);
+    free(heaps);
+
     free(input);
+    free(output);
 
     return 0;
 }
