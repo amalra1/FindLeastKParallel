@@ -18,7 +18,7 @@ typedef struct
     int valor;
 } par_t;
 
-int n, k, nThreads;
+int n, k, nThreads, tamOutput;
 float *input;
 par_t *output;
 par_t **heaps;
@@ -172,20 +172,13 @@ void *acharKMenores(void *arg)
             indexUltElem = n - 1;
     }
 
-    // // PARTE 1 - Insere todos os valores de input até k na heap S
-    // for (int i = indexPrimElem; i < k; i++)
-    //     insert(heaps[threadNum], &tamHeaps[i], input[i], i);
-
-    // // PARTE 2 - Agora checa o resto do vetor para ver se tem menores
-    // for (int i = k; i < indexUltElem; i++)
-    //     decreaseMax(heaps[threadNum], tamHeaps[i], input[i], i);
-
+    // Vai inserindo na heap 
     for (int i = indexPrimElem; i <= indexUltElem; i++)
     {
         if (tamHeaps[threadNum] < k)
             insert(heaps[threadNum], &tamHeaps[threadNum], input[i], i);
         else
-            decreaseMax(heaps[threadNum], tamHeaps[threadNum], input[i], i);            
+            decreaseMax(heaps[threadNum], k, input[i], i);            
     }
 
     printf("Thread %d tem a heap:\n", threadNum);
@@ -280,11 +273,24 @@ int main(int argc, char* argv[])
         }
     }
 
+    tamOutput = 0;
+    // Junta todas as heaps em uma só, montando a solução final
+    for (int i = 0; i < nThreads; i++)
+    {
+        for (int j = 0; j < k; j++)
+        {
+            if (tamOutput < k)
+                insert(output, &tamOutput, heaps[i][j].chave, heaps[i][j].valor);
+            else
+                decreaseMax(output, tamOutput, heaps[i][j].chave, heaps[i][j].valor);
+        }
+    }
+
     // Printa K menores
-    // printf("\nK menores:\n");
-    // for (int i = 0; i < k; i++)
-    //     printf("%0.f ", output[i].chave);
-    // printf("\n");
+    printf("\nK menores:\n");
+    for (int i = 0; i < k; i++)
+        printf("%0.f ", output[i].chave);
+    printf("\n");
 
     // Pega o tempo final de exec do algoritmo
     endTime = clock();
