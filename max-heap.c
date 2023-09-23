@@ -22,6 +22,7 @@ int n, k, nThreads;
 float *input;
 par_t *output;
 par_t **heaps;
+int* tamHeaps;
 
 void drawHeapTree(par_t heap[], int size, int nLevels) // FIX ME!
 {
@@ -156,7 +157,6 @@ void geraNaleatorios(float v[], int n)
 
 void *acharKMenores(void *arg) 
 {
-    int heapSize = 0;
     int threadNum = (int)arg;
     int indexPrimElem = threadNum * (n/nThreads);  // Cada thread vai ter n/nthreads elementos
     int indexUltElem;                              // A multiplicação é pra ver em qual dos blocos ela está
@@ -172,26 +172,24 @@ void *acharKMenores(void *arg)
             indexUltElem = n - 1;
     }
 
-    // PARTE 1 - Insere todos os valores de input até k na heap S
-    for (int i = indexPrimElem; i < k; i++)
-        insert(heaps[threadNum], &heapSize, input[i], i);
+    // // PARTE 1 - Insere todos os valores de input até k na heap S
+    // for (int i = indexPrimElem; i < k; i++)
+    //     insert(heaps[threadNum], &tamHeaps[i], input[i], i);
 
-    // PARTE 2 - Agora checa o resto do vetor para ver se tem menores
-    for (int i = k; i < indexUltElem; i++)
-        decreaseMax(heaps[threadNum], heapSize, input[i], i);
+    // // PARTE 2 - Agora checa o resto do vetor para ver se tem menores
+    // for (int i = k; i < indexUltElem; i++)
+    //     decreaseMax(heaps[threadNum], tamHeaps[i], input[i], i);
 
-    // IA SOLUCIONAR TODOS OS PROBLEMAS ////////////////////////////////////////////////////////////////
-    // AQUI MAS FICOU TARDE FUI DORMIR /////////////////////////////////////////////////////////////////
-    // for (int i = indexPrimElem; i < indexUltElem; i++)
-    // {
-            // if (heapSizes[i] < k)
-                // PARTE 1
-            // else
-                // PARTE 2
-    // }
+    for (int i = indexPrimElem; i <= indexUltElem; i++)
+    {
+        if (tamHeaps[threadNum] < k)
+            insert(heaps[threadNum], &tamHeaps[threadNum], input[i], i);
+        else
+            decreaseMax(heaps[threadNum], tamHeaps[threadNum], input[i], i);            
+    }
 
     printf("Thread %d tem a heap:\n", threadNum);
-    drawHeapTree(heaps[threadNum], heapSize, k);
+    drawHeapTree(heaps[threadNum], tamHeaps[threadNum], k);
 }
 
 int main(int argc, char* argv[])
@@ -233,6 +231,7 @@ int main(int argc, char* argv[])
     input = malloc(n * sizeof(par_t));
     heaps = malloc(nThreads * sizeof(par_t *));
     output = malloc(k * sizeof(par_t));
+    tamHeaps = malloc(nThreads * sizeof(int));
 
     // Randomiza a SEED
     srand(time(NULL));
@@ -242,7 +241,10 @@ int main(int argc, char* argv[])
 
     // Aloca espaço para cada heap
     for (int i = 0; i < nThreads; i++)
+    {
+        tamHeaps[i] = 0;
         heaps[i] = malloc(k * sizeof(par_t));
+    }
 
     // Printa vetor de aleatórios
     printf("Vetor de aleatórios:\n");
@@ -294,6 +296,7 @@ int main(int argc, char* argv[])
     for (int i = 0; i < nThreads; i++)
         free(heaps[i]);
     free(heaps);
+    free(tamHeaps);
 
     free(input);
     free(output);
