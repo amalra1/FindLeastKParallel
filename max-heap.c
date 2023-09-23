@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <pthread.h>
+#include "chrono.h"
 
 #define THREAD_MIN 1
 #define THREAD_MAX 8
@@ -185,6 +186,57 @@ void *acharKMenores(void *arg)
     drawHeapTree(heaps[threadNum], tamHeaps[threadNum], k);
 }
 
+int compare(const void *a, const void *b) 
+{
+    const par_t *parA = (const par_t *)a;
+    const par_t *parB = (const par_t *)b;
+
+    if (parA->chave < parB->chave) return -1;
+    if (parA->chave > parB->chave) return 1;
+    
+    // Retorna 0 se os elementos são iguais
+    return 0;
+}
+
+void verifyOutput(const float *Input, const par_t *Output, int nTotalElmts, int k)
+{
+    par_t* I = malloc(nTotalElmts * sizeof(par_t));
+    int ok = 1;
+
+    for (int i = 0; i < nTotalElmts; i++)
+    {
+        I[i].chave = Input[i];
+        I[i].valor = i;
+    }
+
+    // Ordena I
+    qsort(I, nTotalElmts, sizeof(par_t), compare);
+
+    // Ordena Output -- Pra ficar mais rápido a verificação
+    qsort((void*) Output, k, sizeof(par_t), compare);
+
+    for (int i = 0; i < k; i++)
+    {
+        if (I[i].valor != Output[i].valor)
+        {
+            // Caso de elementos iguais em ordem oposta
+            // Podia resolver isso usando um alg de ordenacao estavel
+            if (I[i].chave != Output[i].chave)
+            {
+                ok--;
+                break;
+            }
+        }   
+    }
+    
+    if(ok)
+       printf("\nOutput set verifyed correctly.\n");
+    else
+       printf("\nOutput set DID NOT compute correctly!!!\n");
+
+    free(I);   
+}
+
 int main(int argc, char* argv[])
 {                        
     clock_t startTime, endTime;
@@ -286,14 +338,16 @@ int main(int argc, char* argv[])
         }
     }
 
+    // Pega o tempo final de exec do algoritmo
+    endTime = clock();
+
     // Printa K menores
     printf("\nK menores:\n");
     for (int i = 0; i < k; i++)
         printf("%0.f ", output[i].chave);
     printf("\n");
 
-    // Pega o tempo final de exec do algoritmo
-    endTime = clock();
+    verifyOutput(input, output, n, k);
 
     // Printando o tempo que levou
     elapsedTime = ((double)(endTime - startTime)) / CLOCKS_PER_SEC * 1000.0;
