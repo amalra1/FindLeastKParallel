@@ -102,7 +102,7 @@ void insert(par_t heap[], int *tam, float chave, int valor)
     heap[last].chave = chave;
     heap[last].valor = valor;
 
-    printf("Inserido --> %1f\n", heap[last].chave);
+    // printf("Inserido --> %1f\n", heap[last].chave);
 
     heapifyUp(heap, tam, last);
 }
@@ -131,10 +131,10 @@ void decreaseMax(par_t heap[], int tam, float chave, int valor)
         heap[0].chave = chave;
         heap[0].valor = valor;
 
-        #if SHOW_DECREASE_MAX_STEPS
-            // drawHeapTree( heap, tam, 4 );
-            printf("    ~~~~~~~~~~~~~~~~~~~~~~~~~DECREASE MAX!\n");
-        #endif
+        // #if SHOW_DECREASE_MAX_STEPS
+        //     // drawHeapTree( heap, tam, 4 );
+        //     printf("    ~~~~~~~~~~~~~~~~~~~~~~~~~DECREASE MAX!\n");
+        // #endif
 
         maxHeapify(heap, tam, 0);
     }
@@ -296,10 +296,10 @@ int main(int argc, char* argv[])
     }
 
     // Printa vetor de aleatórios
-    printf("Vetor de aleatórios:\n");
-    for (int i = 0; i < n; i++)
-        printf("%0.f ", input[i]);
-    printf("\n");
+    // printf("Vetor de aleatórios:\n");
+    // for (int i = 0; i < n; i++)
+    //     printf("%0.f ", input[i]);
+    // printf("\n");
 
     // Começa o cronômetro
     chronometer_t time;
@@ -350,10 +350,10 @@ int main(int argc, char* argv[])
     chrono_stop(&time);
 
     // Printa K menores
-    printf("\nK menores:\n");
-    for (int i = 0; i < k; i++)
-        printf("%0.f ", output[i].chave);
-    printf("\n");
+    // printf("\nK menores:\n");
+    // for (int i = 0; i < k; i++)
+    //     printf("%0.f ", output[i].chave);
+    // printf("\n");
 
     // Printando tempo e MOPS
     chrono_reportTime(&time, "time: ");
