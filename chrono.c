@@ -6,7 +6,6 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "chrono.h"
 #include <math.h>
 #include <stdio.h>
 
@@ -19,6 +18,7 @@
 #include <unistd.h>   /* declaration of gettimeofday()       */
 
 #include <time.h>
+#include "chrono.h"
 
 void chrono_reset(chronometer_t *chrono)
 {
