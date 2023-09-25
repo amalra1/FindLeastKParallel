@@ -310,6 +310,7 @@ int main(int argc, char* argv[])
     num = 0;
     for (int i = 0; i < nThreads; i++)
     {
+        //pthread_create(&threads[i], NULL, acharKMenores, (void*)num);
         // Testa se criou as threads
         if (pthread_create(&threads[i], NULL, acharKMenores, (void*)num) != 0)
         {
@@ -323,6 +324,7 @@ int main(int argc, char* argv[])
     // Aguarda as threads terminarem a execução
     for (int i = 0; i < nThreads; i++)
     {
+        //pthread_join(threads[i], NULL);
         // Testa se chegaram ao fim
         if (pthread_join(threads[i], NULL) != 0)
         {
