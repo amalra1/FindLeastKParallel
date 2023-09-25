@@ -1,23 +1,9 @@
-CC = gcc 
-CFLAGS = -std=c99 -Wall
-LIBS = -lm -lpthread
-NAME = max-heap
-OBJ = max-heap.o chrono.o
-
-all: $(NAME)
-
-$(NAME): $(OBJ)
-	$(CC) $(OBJ) -o $(NAME) $(LDFLAGS) $(LIBS) 
-
-max-heap.o: max-heap.c chrono.h
-	$(CC) $(CFLAGS) -c max-heap.c
-
-chrono.o: chrono.c chrono.h 
-	$(CC) $(CFLAGS) -c chrono.c
+run:
+	gcc -Wall -c chrono.c -o chrono.o
+	gcc -Wall chrono.o max-heap.c -o max-heap -lpthread -lm
 
 clean:
-	rm -f *.o
-
-purge:
-	rm -f *.o
-	rm -f $(NAME)
+	rm *.o
+	rm a.out
+	rm max-heap
+	resultado*
