@@ -182,10 +182,14 @@ void *acharKMenores(void *arg)
             decreaseMax(heaps[threadNum], k, input[i], i);            
     }
 
-    printf("Thread %d tem a heap:\n", threadNum);
-    drawHeapTree(heaps[threadNum], tamHeaps[threadNum], k);
+    //printf("Thread %d tem a heap:\n", threadNum);
+    //drawHeapTree(heaps[threadNum], tamHeaps[threadNum], k);
+
+    pthread_exit(NULL);
+    return NULL;
 }
 
+// Necessário pra usar o qsort
 int compare(const void *a, const void *b) 
 {
     const par_t *parA = (const par_t *)a;
@@ -230,7 +234,7 @@ void verifyOutput(const float *Input, const par_t *Output, int nTotalElmts, int 
     }
     
     if(ok)
-       printf("\nOutput set verifyed correctly.\n");
+       printf("\nOutput set verified correctly.\n");
     else
        printf("\nOutput set DID NOT compute correctly!!!\n");
 
@@ -239,8 +243,8 @@ void verifyOutput(const float *Input, const par_t *Output, int nTotalElmts, int 
 
 int main(int argc, char* argv[])
 {                        
-    clock_t startTime, endTime;
-    double elapsedTime;
+    //clock_t startTime, endTime;
+    double timeSeconds;
     int num;
 
     // Tratando a entrada
@@ -274,8 +278,8 @@ int main(int argc, char* argv[])
     // Aloca espaços
     pthread_t threads[nThreads];
     input = malloc(n * sizeof(par_t));
-    heaps = malloc(nThreads * sizeof(par_t *));
     output = malloc(k * sizeof(par_t));
+    heaps = malloc(nThreads * sizeof(par_t *));
     tamHeaps = malloc(nThreads * sizeof(int));
 
     // Randomiza a SEED
@@ -297,8 +301,10 @@ int main(int argc, char* argv[])
         printf("%0.f ", input[i]);
     printf("\n");
 
-    // Pega o tempo inicial de exec do algoritmo
-    startTime = clock(); 
+    // Começa o cronômetro
+    chronometer_t time;
+    chrono_reset(&time);
+    chrono_start(&time);
     
     // Cria as threads
     num = 0;
@@ -320,13 +326,13 @@ int main(int argc, char* argv[])
         // Testa se chegaram ao fim
         if (pthread_join(threads[i], NULL) != 0)
         {
-            perror("Erro ao aguardas as threads\n");
+            perror("Erro ao aguardar as threads\n");
             exit(EXIT_FAILURE);
         }
     }
 
-    tamOutput = 0;
     // Junta todas as heaps em uma só, montando a solução final
+    tamOutput = 0;
     for (int i = 0; i < nThreads; i++)
     {
         for (int j = 0; j < k; j++)
@@ -338,8 +344,8 @@ int main(int argc, char* argv[])
         }
     }
 
-    // Pega o tempo final de exec do algoritmo
-    endTime = clock();
+    // Para o cronometro
+    chrono_stop(&time);
 
     // Printa K menores
     printf("\nK menores:\n");
@@ -347,12 +353,16 @@ int main(int argc, char* argv[])
         printf("%0.f ", output[i].chave);
     printf("\n");
 
+    // Printando tempo e MOPS
+    chrono_reportTime(&time, "time: ");
+    timeSeconds = (double) chrono_gettotal(&time) / ((double)1000 * 1000 * 1000); // NanoSeconds para Seconds
+    printf("\nO algoritmo demorou: %lf ms\n", timeSeconds * 1000);  // Milissegundos
+    printf("E a vazão foi de: %lf MOPS", (n/timeSeconds));  // MOPS
+
+    // Verifica saída
     verifyOutput(input, output, n, k);
 
-    // Printando o tempo que levou
-    elapsedTime = ((double)(endTime - startTime)) / CLOCKS_PER_SEC * 1000.0;
-    printf("\nO algoritmo demorou: \n%.3f milissegundos para executar.\nE a vazão foi de %.3f MOPS\n", elapsedTime, (n/elapsedTime)/1000);
-
+    // Da free em tudo
     for (int i = 0; i < nThreads; i++)
         free(heaps[i]);
     free(heaps);
