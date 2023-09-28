@@ -11,7 +11,6 @@
 #define THREAD_MAX 8
 #define SHOW_DECREASE_MAX_STEPS 1
 #define MAX_HEAP_SIZE (1024 * 1024)
-#define RAND_RANGE 10  // Só pra teste, no trabalho vai ter que deletar essa pra fazer com o RAND_MAX
 
 typedef struct
 {
@@ -78,10 +77,10 @@ void maxHeapify(par_t heap[], int tam, int i)
 // #define parent(pos) ( pos/2 ) // SE nao usar posicao 0
 #define parent(pos) ((pos - 1) / 2)
 
-void heapifyUp(par_t heap[], int *tam, int pos)
+void heapifyUp(par_t* heap, int pos)
 {
-    int chave = heap[pos].chave;
-    int valor = heap[pos].valor;
+    float chave = heap[pos].chave;
+    float valor = heap[pos].valor;
 
     while (pos > 0 && chave > heap[parent(pos)].chave)
     {
@@ -94,7 +93,7 @@ void heapifyUp(par_t heap[], int *tam, int pos)
     heap[pos].valor = valor;
 }
 
-void insert(par_t heap[], int *tam, float chave, int valor)
+void insert(par_t* heap, int *tam, float chave, int valor)
 {
     *tam += 1;
     int last = *tam - 1;
@@ -102,9 +101,9 @@ void insert(par_t heap[], int *tam, float chave, int valor)
     heap[last].chave = chave;
     heap[last].valor = valor;
 
-    // printf("Inserido --> %1f\n", heap[last].chave);
+    //printf("Inserido --> %1f\n", heap[last].chave);
 
-    heapifyUp(heap, tam, last);
+    heapifyUp(heap, last);
 }
 
 int isMaxHeap(par_t heap[], int tam)
@@ -145,8 +144,8 @@ void geraNaleatorios(float v[], int n)
     for(int i = 0; i < n; i++)
     {
         // Gera dois aleatorios entre 0 e RAND_MAX
-	    int a = rand() % RAND_RANGE;  
-	    int b = rand() % RAND_RANGE;  
+	    int a = rand();
+	    int b = rand(); 
 	
         // Junta esses dois e forma um numero para o vetor v
 	    float elem = a * 100.0 + b;
@@ -179,11 +178,8 @@ void *acharKMenores(void *arg)
         if (tamHeaps[threadNum] < k)
             insert(heaps[threadNum], &tamHeaps[threadNum], input[i], i);
         else
-            decreaseMax(heaps[threadNum], k, input[i], i);            
+            decreaseMax(heaps[threadNum], k, input[i], i);          
     }
-
-    //printf("Thread %d tem a heap:\n", threadNum);
-    //drawHeapTree(heaps[threadNum], tamHeaps[threadNum], k);
 
     pthread_exit(NULL);
     return NULL;
