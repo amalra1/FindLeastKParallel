@@ -1,7 +1,8 @@
 run:
 	gcc -Wall -O3 -c chrono.c -o chrono.o
-	gcc -Wall -O3 chrono.o max-heap.c -o max-heap -lpthread -lm
+	gcc -Wall -O3 -c heap.c -o heap.o
+	gcc -Wall -O3 chrono.o heap.o acharKMenores.c -o acharKMenores -lpthread -lm
 
 clean:
 	rm *.o
-	rm max-heap
+	rm acharKMenores
