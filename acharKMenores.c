@@ -219,7 +219,7 @@ int main(int argc, char* argv[])
     // Printando tempo e MOPS
     chrono_reportTime(&time, "time: ");
     timeSeconds = (double) chrono_gettotal(&time) / ((double)1000 * 1000 * 1000); // NanoSeconds para Seconds
-    printf("\nO algoritmo demorou: %lf ms\n", timeSeconds * 1000);  // Milissegundos
+    printf("\nO algoritmo demorou: %lf ms\n", timeSeconds);
     printf("E a vazão foi de: %lf MOPS", (n/timeSeconds));  // MOPS
 
     // Verifica saída
